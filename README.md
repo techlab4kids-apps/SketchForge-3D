@@ -355,6 +355,14 @@ Build a static export:
 npm run export
 ```
 
+## Optional remote autosave
+
+The editor keeps its existing local IndexedDB project cache. A deployment can enable the generic remote adapter by setting `NEXT_PUBLIC_TL4K_AUTOSAVE_URL` at build time; when the variable is absent, the adapter is a no-op.
+
+The endpoint receives a `POST` multipart request with `project_id`, `client_revision`, `base_revision`, `idempotency_key`, a `.skf` `project` file and an optional PNG `thumbnail`. Requests use same-origin cookies (`credentials: include`) and must return a JSON object containing the accepted server `revision`. A `409` response is terminal and preserves the queued project for explicit conflict resolution. Transient network and `408`, `425`, `429` and `5xx` failures are retried with jittered 1, 2, 4, 8, 16 and 30 second backoff; the pending record is persisted in IndexedDB so it can resume after a reload.
+
+The adapter contains no TL4K session, identity, storage or database logic. The gateway is responsible for authentication, authorization and mapping the generic project identifier to the current user context.
+
 ## Contributing
 
 Contributions are welcome. Good places to help:

@@ -4,6 +4,9 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
+      args:
+        NEXT_PUBLIC_TL4K_AUTOSAVE_URL: "${NEXT_PUBLIC_TL4K_AUTOSAVE_URL:-}"
+        NEXT_PUBLIC_SOURCE_CODE_URL: "${NEXT_PUBLIC_SOURCE_CODE_URL:-}"
     ports:
       - "${SKETCHFORGE_PORT:-3000}:3000"
     environment:

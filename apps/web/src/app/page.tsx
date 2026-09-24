@@ -18,6 +18,7 @@ import {
 import { attachProjectAsset, dedupeProjectAssets, projectAssetFromBytes, sourceFormatForFileName } from "@/lib/projectAssets";
 import { hydrateProjectShapeState, reconcileLoadedProjectShapeCacheEntry, type ImportedMeshResource } from "@/lib/projectShapePersistence";
 import { exportSkfProject, importSkfProject, SKF_CREATED_WITH_VERSION } from "@/lib/skfProject";
+import { getRemoteAutosaveAdapter } from "@/lib/remoteAutosave";
 import { importExtensionSupported } from "@/lib/importExtensions";
 import { DEFAULT_SNAP_GRID, DEFAULT_WORKPLANE_WORKSPACE, normalizeSnapGrid, normalizeWorkspaceSettings, workplaneSettingsFingerprint } from "@/lib/workplaneSettings";
 import type { GridSize, ProjectAsset, WorkplaneShape, WorkplaneWorkspaceSettings } from "@/types/sketchforge";
@@ -292,7 +293,7 @@ async function loadProjectShapes(projectId: string) {
   };
 }
 
-async function saveProjectShapes(projectId: string, entry: ProjectShapeCacheEntry, context: ProjectShapeSaveContext) {
+async function saveProjectShapes(projectId: string, entry: ProjectShapeCacheEntry, context: ProjectShapeSaveContext): Promise<Uint8Array | null> {
   const skfPackage = await exportSkfProject({
     projectId,
     projectName: context.projectName,
@@ -310,7 +311,7 @@ async function saveProjectShapes(projectId: string, entry: ProjectShapeCacheEntr
     compressionLevel: 1,
   });
   const database = await openProjectShapesDb();
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<Uint8Array | null>((resolve, reject) => {
     const transaction = database.transaction(PROJECT_SHAPES_STORE_NAME, "readwrite");
     const store = transaction.objectStore(PROJECT_SHAPES_STORE_NAME);
     const existingRequest = store.get(projectId);
@@ -320,6 +321,7 @@ async function saveProjectShapes(projectId: string, entry: ProjectShapeCacheEntr
     existingRequest.onsuccess = () => {
       const existing = existingRequest.result as ProjectShapeRecord | undefined;
       if (existing && existing.revision > entry.revision) {
+        resolve(null);
         return;
       }
       store.put({
@@ -331,7 +333,7 @@ async function saveProjectShapes(projectId: string, entry: ProjectShapeCacheEntr
     };
     transaction.oncomplete = () => {
       database.close();
-      resolve();
+      resolve(skfPackage);
     };
     transaction.onerror = () => {
       database.close();
@@ -345,7 +347,7 @@ async function saveProjectShapes(projectId: string, entry: ProjectShapeCacheEntr
 }
 
 function saveProjectShapesWhenIdle(projectId: string, entry: ProjectShapeCacheEntry, context: ProjectShapeSaveContext) {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<Uint8Array | null>((resolve, reject) => {
     const save = () => {
       void saveProjectShapes(projectId, entry, context).then(resolve, reject);
     };
@@ -521,8 +523,20 @@ export default function Home() {
   const projectsJsonRef = useRef("");
   const dashboardImportInputRef = useRef<HTMLInputElement | null>(null);
   const nextProjectRevisionRef = useRef(0);
-  const projectShapeSaveQueuesRef = useRef<Record<string, Promise<void>>>({});
+  const projectShapeSaveQueuesRef = useRef<Record<string, Promise<Uint8Array | null>>>({});
   const editorLoadingStartedAtRef = useRef(0);
+  const remoteThumbnailsRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    const adapter = getRemoteAutosaveAdapter();
+    return adapter.subscribe((status) => {
+      if (status.state === "conflict") {
+        setDashboardNotice("Remote autosave stopped because this project changed elsewhere");
+      } else if (status.state === "error") {
+        setDashboardNotice(status.error ?? "Remote autosave could not save this project");
+      }
+    });
+  }, []);
 
   const startEditorTransition = useCallback(() => {
     editorLoadingStartedAtRef.current = Date.now();
@@ -789,6 +803,10 @@ export default function Home() {
   const updateProjectSnapshot = useCallback(async (snapshot: { image: string; projectId: string; shapes: number }, signal?: AbortSignal) => {
     const version = Date.now();
     if (signal?.aborted) throw new DOMException("Thumbnail upload aborted", "AbortError");
+    remoteThumbnailsRef.current[snapshot.projectId] = snapshot.image;
+    void getRemoteAutosaveAdapter().setThumbnail(snapshot.projectId, snapshot.image).catch((error) => {
+      setDashboardNotice(error instanceof Error ? error.message : "Could not queue remote thumbnail");
+    });
     if (STATIC_EXPORT_BUILD) {
       setProjects((current) =>
         current.map((project) =>
@@ -876,7 +894,17 @@ export default function Home() {
     projectShapeSaveQueuesRef.current[snapshot.projectId] = queuedSave;
 
     void queuedSave
-      .then(() => {
+      .then((skfPackage) => {
+        if (skfPackage) {
+          void getRemoteAutosaveAdapter().enqueue({
+            projectId: snapshot.projectId,
+            clientRevision: revision,
+            skfPackage,
+            thumbnail: remoteThumbnailsRef.current[snapshot.projectId],
+          }).catch((error) => {
+            setDashboardNotice(error instanceof Error ? error.message : "Could not queue remote autosave");
+          });
+        }
         setProjects((current) =>
           current.map((project) =>
             project.id === snapshot.projectId && (project.revision ?? 0) <= revision
