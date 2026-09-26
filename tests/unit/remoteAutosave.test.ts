@@ -23,6 +23,7 @@ function successfulResponse(revision: number) {
 describe("remote autosave adapter", () => {
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("is a no-op when no endpoint is configured", async () => {
@@ -34,6 +35,30 @@ describe("remote autosave adapter", () => {
     expect(adapter.enabled).toBe(false);
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(adapter.getStatus("project-1")).toBeUndefined();
+  });
+
+  it("uses native timers without binding them to the adapter instance", async () => {
+    const nativeSetTimeout = globalThis.setTimeout;
+    const timerStub = function (this: unknown, handler: TimerHandler, timeout?: number) {
+      if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation");
+      return nativeSetTimeout(handler, timeout);
+    };
+    vi.stubGlobal("setTimeout", timerStub);
+    const { storage } = memoryStorage();
+    const fetchImpl = vi.fn(async () => successfulResponse(1));
+    const adapter = new RemoteAutosaveAdapter({
+      endpoint: "/api/tl4k/autosave",
+      storage,
+      fetchImpl,
+      debounceMs: 0,
+      createId: () => "timer-test",
+    });
+
+    await adapter.enqueue({ projectId: "project-timer", clientRevision: 1, skfPackage: new Uint8Array([1]) });
+    await new Promise<void>((resolve) => nativeSetTimeout(resolve, 10));
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    adapter.destroy();
   });
 
   it("uploads the latest .skf package and thumbnail as multipart data", async () => {

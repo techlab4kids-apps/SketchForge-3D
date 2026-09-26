@@ -191,11 +191,13 @@ export class RemoteAutosaveAdapter {
         ? createIndexedDbRemoteAutosaveStorage(window.indexedDB)
         : null
       : options.storage;
-    this.fetchImpl = options.fetchImpl ?? fetch;
-    this.now = options.now ?? Date.now;
-    this.setTimeoutImpl = options.setTimeoutImpl ?? setTimeout;
-    this.clearTimeoutImpl = options.clearTimeoutImpl ?? clearTimeout;
-    this.random = options.random ?? Math.random;
+    this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
+    this.now = options.now ?? (() => Date.now());
+    // Keep native timer calls unbound: invoking window.setTimeout as an adapter
+    // method gives it the wrong `this` and throws Illegal invocation in browsers.
+    this.setTimeoutImpl = options.setTimeoutImpl ?? ((handler: TimerHandler, timeout?: number) => setTimeout(handler, timeout)) as typeof setTimeout;
+    this.clearTimeoutImpl = options.clearTimeoutImpl ?? ((timer: ReturnType<typeof setTimeout>) => clearTimeout(timer)) as typeof clearTimeout;
+    this.random = options.random ?? (() => Math.random());
     this.createId = options.createId ?? defaultCreateId;
     this.debounceMs = options.debounceMs ?? REMOTE_AUTOSAVE_DEBOUNCE_MS;
     this.maxWaitMs = options.maxWaitMs ?? REMOTE_AUTOSAVE_MAX_WAIT_MS;

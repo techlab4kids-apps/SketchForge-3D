@@ -4,7 +4,10 @@ import { NextResponse } from "next/server";
 
 export const revalidate = false;
 
-const THUMBNAIL_DIR = path.join(process.cwd(), ".codex", "project-thumbnails");
+const THUMBNAIL_ROOT = process.env.SKETCHFORGE_SHARED_PROJECTS_DIR?.trim() || path.join(process.cwd(), ".codex");
+const THUMBNAIL_DIR = path.join(THUMBNAIL_ROOT, "project-thumbnails");
+const THUMBNAIL_OWNER_DIR = path.join(THUMBNAIL_DIR, ".owners");
+const SKETCHFORGE_SESSION_HEADER = "x-sketchforge-session";
 const PNG_DATA_URL_PREFIX = "data:image/png;base64,";
 const MAX_THUMBNAIL_BYTES = 5 * 1024 * 1024;
 const MAX_THUMBNAIL_REQUEST_BYTES = Math.ceil((MAX_THUMBNAIL_BYTES * 4) / 3) + PNG_DATA_URL_PREFIX.length + 2048;
@@ -20,6 +23,49 @@ function thumbnailPath(projectId: string) {
     return null;
   }
   return path.join(THUMBNAIL_DIR, `${safeId}.png`);
+}
+
+function thumbnailOwnerPath(projectId: string) {
+  const safeId = safeProjectId(projectId);
+  return safeId ? path.join(THUMBNAIL_OWNER_DIR, `${safeId}.owner`) : null;
+}
+
+function authenticatedSessionId(request: Request) {
+  const sessionId = request.headers.get(SKETCHFORGE_SESSION_HEADER)?.trim();
+  return sessionId && sessionId.length <= 128 ? sessionId : null;
+}
+
+async function readThumbnailOwner(projectId: string) {
+  const ownerPath = thumbnailOwnerPath(projectId);
+  if (!ownerPath) return null;
+  try {
+    return await fs.readFile(ownerPath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+async function claimThumbnailProject(projectId: string, sessionId: string) {
+  const ownerPath = thumbnailOwnerPath(projectId);
+  if (!ownerPath) return false;
+  const existingOwner = await readThumbnailOwner(projectId);
+  if (existingOwner !== null) return existingOwner === sessionId;
+  await fs.mkdir(THUMBNAIL_OWNER_DIR, { recursive: true });
+  try {
+    await fs.writeFile(ownerPath, sessionId, { encoding: "utf8", flag: "wx" });
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    return (await readThumbnailOwner(projectId)) === sessionId;
+  }
+}
+
+async function canAccessThumbnailProject(request: Request, projectId: string) {
+  const sessionId = authenticatedSessionId(request);
+  if (!sessionId) return true;
+  const owner = await readThumbnailOwner(projectId);
+  return owner === null || owner === sessionId;
 }
 
 function isSameOriginRequest(request: Request) {
@@ -62,6 +108,9 @@ export async function GET(request: Request) {
   }
 
   try {
+    if (!(await canAccessThumbnailProject(request, projectId))) {
+      return new NextResponse("Project thumbnail is owned by another SketchForge session", { status: 403 });
+    }
     const image = await fs.readFile(filePath);
     return new NextResponse(image, {
       headers: {
@@ -110,6 +159,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Thumbnail image is too large" }, { status: 413 });
     }
 
+    const sessionId = authenticatedSessionId(request);
+    if (sessionId && !(await claimThumbnailProject(body.projectId, sessionId))) {
+      return NextResponse.json({ error: "Project thumbnail is owned by another SketchForge session" }, { status: 403 });
+    }
+
     await fs.mkdir(THUMBNAIL_DIR, { recursive: true });
     await fs.rm(filePath, { force: true });
     await fs.writeFile(filePath, Buffer.from(encodedImage, "base64"));
@@ -129,6 +183,9 @@ export async function DELETE(request: Request) {
   const filePath = thumbnailPath(projectId);
   if (!filePath) {
     return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+  }
+  if (!(await canAccessThumbnailProject(request, projectId))) {
+    return NextResponse.json({ error: "Project thumbnail is owned by another SketchForge session" }, { status: 403 });
   }
 
   await fs.rm(filePath, { force: true });
