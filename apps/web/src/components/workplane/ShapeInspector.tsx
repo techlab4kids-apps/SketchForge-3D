@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, LockKeyhole, LockKeyholeOpen, Split } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type SetStateAction } from "react";
+import { useTranslation, t } from "@/lib/i18n";
 import { ToolbarHideSelectedIcon } from "@/components/icons";
 import {
   DEFAULT_GEAR_HELIX_ANGLE,
@@ -477,10 +478,10 @@ export function ShapeInspector({
         </button>
         <strong>{shape.name}</strong>
         <div className="inspector-header-actions">
-          <button className={locked ? "inspector-header-icon active" : "inspector-header-icon"} aria-label={locked ? "Unlock shape" : "Lock shape"} onClick={() => onUpdate({ locked: !locked })}>
+          <button className={locked ? "inspector-header-icon active" : "inspector-header-icon"} aria-label={locked ? t("inspector.unlock") : t("inspector.lock")} onClick={() => onUpdate({ locked: !locked })}>
             {locked ? <LockKeyhole size={31} strokeWidth={2.4} /> : <LockKeyholeOpen size={31} strokeWidth={2.4} />}
           </button>
-          <button className={shape.hidden ? "inspector-header-icon active" : "inspector-header-icon"} aria-label={shape.hidden ? "Show shape" : "Hide shape"} onClick={() => onUpdate({ hidden: !shape.hidden })}>
+          <button className={shape.hidden ? "inspector-header-icon active" : "inspector-header-icon"} aria-label={shape.hidden ? t("toolbar.showAll") : t("inspector.hide")} onClick={() => onUpdate({ hidden: !shape.hidden })}>
             <ToolbarHideSelectedIcon />
           </button>
         </div>
@@ -501,7 +502,7 @@ export function ShapeInspector({
           aria-expanded={colorOpen}
         >
           <span className="large-solid-swatch" style={{ "--swatch": solidColor } as CSSProperties} />
-          <span>Solid</span>
+          <span>{t("inspector.solid")}</span>
         </button>
         <button
           className={shape.hole ? "active hole-choice" : "hole-choice"}
@@ -513,14 +514,14 @@ export function ShapeInspector({
           aria-pressed={shape.hole}
         >
           <span className="large-hole-swatch" />
-          <span>Hole</span>
+          <span>{t("inspector.hole")}</span>
         </button>
       </div>
 
       {colorOpen ? (
         <div className="color-card" aria-label="Shape color">
           <div className="color-card-header">
-            <span>Color</span>
+            <span>{t("inspector.color")}</span>
             <span className="color-value">{solidColor.toUpperCase()}</span>
           </div>
           <div className="color-grid">
@@ -718,6 +719,30 @@ export function SnapGridControl({
   );
 }
 
+
+function translatePropertyLabel(label: string): string {
+  switch (label.toLowerCase()) {
+    case "length": return t("inspector.length");
+    case "width": return t("inspector.width");
+    case "height": return t("inspector.height");
+    case "radius": return t("inspector.radius");
+    case "top radius": return t("inspector.topRadius");
+    case "base radius": return t("inspector.baseRadius");
+    case "sides": return t("inspector.sides");
+    case "steps": return t("inspector.steps");
+    case "bevel": return t("inspector.bevel");
+    case "segments": return t("inspector.segments");
+    case "text": return t("inspector.text");
+    case "font": return t("inspector.font");
+    case "wall thickness": return t("inspector.wallThickness");
+    case "inner radius": return t("inspector.innerRadius");
+    case "teeth": return t("inspector.teeth");
+    case "center hole": return t("inspector.centerHole");
+    case "helix angle": return t("inspector.helixAngle");
+    default: return label;
+  }
+}
+
 function RangeProperty({
   label,
   value,
@@ -759,7 +784,7 @@ function RangeProperty({
   return (
     <label className="range-property" style={{ "--slider-pos": `${position}%` } as CSSProperties}>
       <span className="range-property-header">
-        <span className="range-property-name">{label}</span>
+        <span className="range-property-name">{translatePropertyLabel(label)}</span>
         <span className="range-value-control">
           <input
             type="text"
@@ -808,7 +833,7 @@ function RangeProperty({
 function TextProperty({ label, value, disabled, onChange, onInteractionActiveChange }: TextPropertyConfig & { disabled?: boolean; onInteractionActiveChange?: (active: boolean) => void }) {
   return (
     <label className="text-property">
-      <span>{label}</span>
+      <span>{translatePropertyLabel(label)}</span>
       <input
         type="text"
         value={value}
@@ -826,7 +851,7 @@ function TextProperty({ label, value, disabled, onChange, onInteractionActiveCha
 function SelectProperty({ label, value, options, disabled, onChange }: SelectPropertyConfig & { disabled?: boolean }) {
   return (
     <label className="select-property">
-      <span>{label}</span>
+      <span>{translatePropertyLabel(label)}</span>
       <select value={value} disabled={disabled} onChange={(event) => onChange(event.currentTarget.value)}>
         {options.map((option) => (
           <option key={option} value={option}>

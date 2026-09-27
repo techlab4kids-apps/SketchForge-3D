@@ -4,6 +4,7 @@ import { Box as BoxIcon, ChevronDown, Grid3X3, History, Palette, RotateCcw, Rule
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { HexColorInput, HexColorPicker } from "react-colorful";
+import { useTranslation, t } from "@/lib/i18n";
 import { APP_THEME_OPTIONS, type AppThemePreference } from "@/lib/appTheme";
 import { gearCenterHoleLimits, gearToothPitch } from "@/lib/gearGeometry";
 import { normalizeScaleForUnits, parseMeasurementInput, scaleOptionsForUnits, WORKSPACE_UNIT_OPTIONS } from "@/lib/measurementUnits";
@@ -135,6 +136,7 @@ export function WorkspaceSettingsModal({
   onMakeDefault: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [defaultSaved, setDefaultSaved] = useState(false);
   const [activeSection, setActiveSection] = useState<WorkspaceSettingsSection>("appearance");
   const [selectedShapeKind, setSelectedShapeKind] = useState<ShapeKind>(toolbarShapeAssets[0].kind);
@@ -288,19 +290,19 @@ export function WorkspaceSettingsModal({
           <nav className="workspace-settings-nav" aria-label="Workspace settings sections">
             <button className={activeSection === "appearance" ? "active" : ""} aria-current={activeSection === "appearance" ? "page" : undefined} onClick={() => setActiveSection("appearance")}>
               <Palette size={18} />
-              <span>Appearance</span>
+              <span>{t("common.settings")}</span>
             </button>
             <button className={activeSection === "measurement" ? "active" : ""} aria-current={activeSection === "measurement" ? "page" : undefined} onClick={() => setActiveSection("measurement")}>
               <Ruler size={18} />
-              <span>Measurement</span>
+              <span>{t("workplane.units")}</span>
             </button>
             <button className={activeSection === "workplane" ? "active" : ""} aria-current={activeSection === "workplane" ? "page" : undefined} onClick={() => setActiveSection("workplane")}>
               <Grid3X3 size={18} />
-              <span>Workplane</span>
+              <span>{t("workplane.title")}</span>
             </button>
             <button className={activeSection === "shapes" ? "active" : ""} aria-current={activeSection === "shapes" ? "page" : undefined} onClick={() => setActiveSection("shapes")}>
               <BoxIcon size={18} />
-              <span>Shape defaults</span>
+              <span>{t("shapes.basicShapes")}</span>
             </button>
             <button className={activeSection === "history" ? "active" : ""} aria-current={activeSection === "history" ? "page" : undefined} onClick={() => setActiveSection("history")}>
               <History size={18} />
@@ -313,7 +315,7 @@ export function WorkspaceSettingsModal({
               {activeSection === "appearance" ? (
                 <>
                   <div className="workspace-section-heading">
-                    <strong>Appearance</strong>
+                    <strong>{t("common.settings")}</strong>
                     <span>Adjust the canvas and navigation behavior.</span>
                   </div>
                   <label className="workspace-select">
@@ -371,7 +373,7 @@ export function WorkspaceSettingsModal({
               {activeSection === "measurement" ? (
                 <>
                   <div className="workspace-section-heading">
-                    <strong>Measurement</strong>
+                    <strong>{t("workplane.units")}</strong>
                     <span>Choose units, precision, scale, and snapping.</span>
                   </div>
                   <WorkspaceSelect
@@ -407,7 +409,7 @@ export function WorkspaceSettingsModal({
               {activeSection === "workplane" ? (
                 <>
                   <div className="workspace-section-heading">
-                    <strong>Workplane</strong>
+                    <strong>{t("workplane.title")}</strong>
                     <span>Set the plate dimensions and visible grid spacing.</span>
                   </div>
                   <WorkspaceSelect
@@ -418,7 +420,7 @@ export function WorkspaceSettingsModal({
                   />
                   <div className="workspace-dimensions">
                     <label>
-                      <span>Width</span>
+                      <span>{t("inspector.width")}</span>
                       <input
                         type="text"
                         inputMode="decimal"
@@ -434,7 +436,7 @@ export function WorkspaceSettingsModal({
                       />
                     </label>
                     <label>
-                      <span>Length</span>
+                      <span>{t("inspector.length")}</span>
                       <input
                         type="text"
                         inputMode="decimal"
@@ -840,7 +842,7 @@ function GridColorControl({ color, onChange }: { color: string; onChange: (color
           <button
             className="workspace-color-reset"
             type="button"
-            title="Reset grid color"
+            title={t("workplane.resetGridColor")}
             aria-label="Reset grid color"
             onClick={() => {
               previewColor(DEFAULT_WORKPLANE_WORKSPACE.gridColor);
@@ -857,7 +859,7 @@ function GridColorControl({ color, onChange }: { color: string; onChange: (color
 
   return (
     <div className="workspace-row workspace-grid-color-row">
-      <span>Grid color</span>
+      <span>{t("workplane.gridColor")}</span>
       <div
         className="workspace-color-control"
         ref={rootRef}

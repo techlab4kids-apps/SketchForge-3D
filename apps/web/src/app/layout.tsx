@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SketchForge 3D editor",
-  description: "Browser-based SketchForge editor workspace",
+  title: "TL4K CAD - SketchForge 3D",
+  description: "Modellazione 3D facile e intuitiva per TL4K",
   icons: {
-    icon: "assets/sketchforge/sketchforge-logo.png",
-    apple: "assets/sketchforge/sketchforge-logo.png",
+    icon: "assets/sketchforge/tl4k-cad-icon-48.webp",
+    apple: "assets/sketchforge/tl4k-cad-icon.webp",
   },
 };
 
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" style={{ colorScheme: "light" }}>
+    <html lang="it" style={{ colorScheme: "light" }}>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

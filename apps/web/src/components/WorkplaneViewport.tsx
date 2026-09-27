@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/lib/i18n";
 import { ChevronLeft, ChevronRight, Home, Minus, MousePointer2, PanelsTopLeft, Plus, Ruler, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type DragEvent, type MutableRefObject, type PointerEvent as ReactPointerEvent, type SetStateAction, type WheelEvent as ReactWheelEvent } from "react";
 import * as THREE from "three";
@@ -5045,12 +5046,12 @@ export function WorkplaneViewport({
     <main className={`workplane-stage ${challengeTutorial ? `key-tag-tutorial-active ${challengeTutorialCollapsed ? "key-tag-tutorial-collapsed" : ""}` : ""}`}>
       <div className="view-cube" aria-label="View orientation cube" onPointerDown={(event) => event.stopPropagation()}>
         <div className="view-cube-inner" ref={viewCubeRef}>
-          <button type="button" className="cube-face cube-top" aria-label="Bottom view" aria-keyshortcuts="6" title="Bottom view (6)" onClick={() => setViewCubeFace("bottom")}>BOTTOM</button>
-          <button type="button" className="cube-face cube-bottom" aria-label="Top view" aria-keyshortcuts="5" title="Top view (5)" onClick={() => setViewCubeFace("top")}>TOP</button>
-          <button type="button" className="cube-face cube-front" aria-label="Front view" aria-keyshortcuts="1" title="Front view (1)" onClick={() => setViewCubeFace("front")}>FRONT</button>
-          <button type="button" className="cube-face cube-back" aria-label="Back view" aria-keyshortcuts="2" title="Back view (2)" onClick={() => setViewCubeFace("back")}>BACK</button>
-          <button type="button" className="cube-face cube-right" aria-label="Right view" aria-keyshortcuts="4" title="Right view (4)" onClick={() => setViewCubeFace("right")}>RIGHT</button>
-          <button type="button" className="cube-face cube-left" aria-label="Left view" aria-keyshortcuts="3" title="Left view (3)" onClick={() => setViewCubeFace("left")}>LEFT</button>
+          <button type="button" className="cube-face cube-top" aria-label={t("camera.bottom")} aria-keyshortcuts="6" title={t("camera.bottom") + " (6)"} onClick={() => setViewCubeFace("bottom")}>{t("camera.bottom").toUpperCase()}</button>
+          <button type="button" className="cube-face cube-bottom" aria-label={t("camera.top")} aria-keyshortcuts="5" title={t("camera.top") + " (5)"} onClick={() => setViewCubeFace("top")}>{t("camera.top").toUpperCase()}</button>
+          <button type="button" className="cube-face cube-front" aria-label={t("camera.front")} aria-keyshortcuts="1" title={t("camera.front") + " (1)"} onClick={() => setViewCubeFace("front")}>{t("camera.front").toUpperCase()}</button>
+          <button type="button" className="cube-face cube-back" aria-label={t("camera.back")} aria-keyshortcuts="2" title={t("camera.back") + " (2)"} onClick={() => setViewCubeFace("back")}>{t("camera.back").toUpperCase()}</button>
+          <button type="button" className="cube-face cube-right" aria-label={t("camera.right")} aria-keyshortcuts="4" title={t("camera.right") + " (4)"} onClick={() => setViewCubeFace("right")}>{t("camera.right").toUpperCase()}</button>
+          <button type="button" className="cube-face cube-left" aria-label={t("camera.left")} aria-keyshortcuts="3" title={t("camera.left") + " (3)"} onClick={() => setViewCubeFace("left")}>{t("camera.left").toUpperCase()}</button>
         </div>
       </div>
 
@@ -5064,7 +5065,7 @@ export function WorkplaneViewport({
             <button className="camera-controls-toggle" aria-label="Hide camera controls" title="Hide controls" aria-expanded={true} onClick={collapseCameraControls}>
               <ChevronLeft size={24} strokeWidth={2.25} aria-hidden="true" />
             </button>
-            <button aria-label="Home" onClick={resetView}>
+            <button aria-label={t("camera.home")} title={t("camera.home")} onClick={resetView}>
               <Home size={24} strokeWidth={2.25} />
             </button>
             <button aria-label="Zoom in" onClick={() => zoomCamera(0.7)}>

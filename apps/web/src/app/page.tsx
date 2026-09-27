@@ -4,6 +4,7 @@ import { Clock3, EllipsisVertical, FileUp, FolderKanban, Grid3X3, HomeIcon, List
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SketchForgeEditor, importedShapeFromObj, importedShapeFromStl, importedShapeFromSvg } from "@/components/SketchForgeEditor";
 import ChallengesDashboard from "@/components/official/ChallengesDashboard";
+import { useTranslation, storeAppLanguage, type AppLanguage } from "@/lib/i18n";
 import { applyAppTheme, readStoredAppTheme, resolveAppTheme, storeAppTheme, type AppThemePreference, type ResolvedAppTheme } from "@/lib/appTheme";
 import type { AppUpdateStatus } from "@/lib/appUpdates";
 import { isChallengeTutorialId, type ChallengeTutorialId } from "@/lib/challenges";
@@ -1497,6 +1498,7 @@ function Dashboard({
   onViewModeChange: (value: ViewMode) => void;
   onWorkspace: () => void;
 }) {
+  const { t, language } = useTranslation();
   const [openProjectMenuId, setOpenProjectMenuId] = useState<string | null>(null);
   const [openSharedProjectMenuFileName, setOpenSharedProjectMenuFileName] = useState<string | null>(null);
   const [projectPendingDeleteId, setProjectPendingDeleteId] = useState<string | null>(null);
@@ -1728,7 +1730,7 @@ function Dashboard({
         </a>
         <div className="dashboard-search">
           <Search size={18} strokeWidth={2.4} />
-          <input value={query} onChange={(event) => onQueryChange(event.currentTarget.value)} placeholder="Search projects" aria-label="Search projects" />
+          <input value={query} onChange={(event) => onQueryChange(event.currentTarget.value)} placeholder={t("dashboard.searchPlaceholder")} aria-label={t("dashboard.searchPlaceholder")} />
         </div>
         <button className="dashboard-primary" type="button" onClick={onCreate}>
           <Plus size={20} strokeWidth={2.6} />
@@ -1848,13 +1850,13 @@ function Dashboard({
                   <span className="dashboard-action-icon">
                     <FileUp size={24} strokeWidth={2.4} />
                   </span>
-                  <span>Open SKF or import geometry</span>
+                  <span>{t("dashboard.openSkfAction")}</span>
                 </button>
                 <button className="dashboard-action-tile" type="button" onClick={onWorkspace}>
                   <span className="dashboard-action-icon">
                     <Clock3 size={24} strokeWidth={2.4} />
                   </span>
-                  <span>Continue workplane</span>
+                  <span>{t("dashboard.continueWorkplaneAction")}</span>
                 </button>
               </div>
               {dashboardNotice ? (
@@ -1949,7 +1951,7 @@ function Dashboard({
         <section className="dashboard-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-project-title">
           <div className="dashboard-confirm-dialog">
             <header>
-              <strong id="delete-project-title">Delete project?</strong>
+              <strong id="delete-project-title">{t("dashboard.deleteConfirmTitle")}</strong>
               <button type="button" aria-label="Cancel project deletion" onClick={() => setProjectPendingDeleteId(null)}>
                 <X size={18} />
               </button>
@@ -2003,13 +2005,13 @@ function Dashboard({
             }}
           >
             <header>
-              <strong id="rename-project-title">Rename project</strong>
+              <strong id="rename-project-title">{t("dashboard.renameTitle")}</strong>
               <button type="button" aria-label="Cancel project rename" onClick={closeProjectRename}>
                 <X size={18} />
               </button>
             </header>
             <label>
-              <span>Project name</span>
+              <span>{t("dashboard.projectNameLabel")}</span>
               <input
                 autoFocus
                 maxLength={80}
@@ -2080,23 +2082,23 @@ function Dashboard({
       {settingsOpen ? (
         <section className="dashboard-settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
           <header>
-            <strong>Settings</strong>
+            <strong>{t("common.settings")}</strong>
             <button type="button" aria-label="Close settings" onClick={onCloseSettings}>
               <X size={18} />
             </button>
           </header>
           <label className="dashboard-setting-row">
-            <span>Save method</span>
+            <span>{t("dashboard.saveMethod")}</span>
             <select
               value={downloadMode}
               onChange={(event) => onDownloadModeChange(!staticExportBuild && event.currentTarget.value === "folder" ? "folder" : "browser")}
             >
-              <option value="browser">Browser downloads</option>
-              {!staticExportBuild ? <option value="folder">Save to folder</option> : null}
+              <option value="browser">{t("dashboard.browserDownloads")}</option>
+              {!staticExportBuild ? <option value="folder">{t("dashboard.saveToFolder")}</option> : null}
             </select>
           </label>
           <label className="dashboard-setting-row">
-            <span>Folder path</span>
+            <span>{t("dashboard.folderPath")}</span>
             <input
               disabled={staticExportBuild || downloadMode !== "folder"}
               value={downloadFolder}
@@ -2105,7 +2107,7 @@ function Dashboard({
             />
           </label>
           <div className="dashboard-version-row">
-            <span>SketchForge version</span>
+            <span>{t("dashboard.version")}</span>
             <strong>{desktopAppVersion ?? updateStatus?.currentVersion ?? SKF_CREATED_WITH_VERSION}</strong>
           </div>
           <section className="dashboard-update-settings" aria-label="Software updates">
@@ -2139,23 +2141,23 @@ function Dashboard({
                 Update to {updateStatus.latestVersion}
               </button>
             ) : updateStatus ? (
-              <span className="dashboard-update-status ready">Up to date</span>
+              <span className="dashboard-update-status ready">{t("dashboard.upToDate")}</span>
             ) : null}
             {!staticExportBuild ? (
               <button className="dashboard-check-update" type="button" onClick={() => void checkForUpdates(true, true)} disabled={updateChecking}>
                 <RefreshCw size={15} className={updateChecking ? "spin" : ""} />
-                <span>{updateChecking ? "Checking…" : "Check for updates"}</span>
+                <span>{updateChecking ? t("dashboard.checking") : t("dashboard.checkForUpdates")}</span>
               </button>
             ) : null}
             {updateMessage && settingsOpen ? <span className="dashboard-update-status" role="status">{updateMessage}</span> : null}
           </section>
           <div className="dashboard-version-row">
-            <span>License</span>
+            <span>{t("dashboard.license")}</span>
             <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noreferrer">AGPLv3</a>
           </div>
           <div className="dashboard-version-row">
-            <span>Corresponding source</span>
-            <a href={SOURCE_CODE_URL} target="_blank" rel="noreferrer">View source</a>
+            <span>{t("dashboard.sourceCode")}</span>
+            <a href={SOURCE_CODE_URL} target="_blank" rel="noreferrer">{t("dashboard.viewSource")}</a>
           </div>
         </section>
       ) : null}

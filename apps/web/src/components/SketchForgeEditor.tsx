@@ -4,6 +4,7 @@ import { Check, Circle as CircleIcon, CloudUpload, Download, Eye, FolderOpen, He
 import type manifoldModule from "manifold-3d";
 import type { ManifoldToplevel } from "manifold-3d";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { t } from "@/lib/i18n";
 import { ADDITION, Brush, Evaluator, HOLLOW_INTERSECTION, HOLLOW_SUBTRACTION, INTERSECTION, SUBTRACTION, type CSGOperation } from "three-bvh-csg";
 import * as THREE from "three";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
@@ -9669,16 +9670,16 @@ function SecondaryToolbar({
     setVisibilityOpen(true);
   };
   const leftTools = [
-    { label: "Copy", icon: ToolbarCopyIcon, action: onCopy, enabled: hasSelection },
-    { label: "Paste", icon: ToolbarPasteIcon, action: onPaste, enabled: hasClipboard },
-    { label: "Duplicate", icon: ToolbarDuplicateIcon, action: onDuplicate, enabled: hasSelection },
-    { label: "Delete", icon: ToolbarTrashIcon, action: onDelete, enabled: hasSelection },
-    { label: "Undo", icon: ToolbarUndoIcon, action: onUndo, enabled: canUndo },
-    { label: "Redo", icon: ToolbarRedoIcon, action: onRedo, enabled: canRedo },
+    { label: t("toolbar.copy"), icon: ToolbarCopyIcon, action: onCopy, enabled: hasSelection },
+    { label: t("toolbar.paste"), icon: ToolbarPasteIcon, action: onPaste, enabled: hasClipboard },
+    { label: t("toolbar.duplicate"), icon: ToolbarDuplicateIcon, action: onDuplicate, enabled: hasSelection },
+    { label: t("toolbar.delete"), icon: ToolbarTrashIcon, action: onDelete, enabled: hasSelection },
+    { label: t("toolbar.undo"), icon: ToolbarUndoIcon, action: onUndo, enabled: canUndo },
+    { label: t("toolbar.redo"), icon: ToolbarRedoIcon, action: onRedo, enabled: canRedo },
   ];
   const visibilityTools = [
     {
-      label: selectionHidden ? "Show selected" : "Hide selected",
+      label: selectionHidden ? t("toolbar.showAll") : t("toolbar.hideSelected"),
       icon: ToolbarHideSelectedIcon,
       action: () => {
         setVisibilityOpen(false);
@@ -9688,19 +9689,19 @@ function SecondaryToolbar({
     },
   ];
   const combineTools = [
-    { label: "Group", icon: ToolbarGroupIcon, action: onGroup, enabled: canGroup },
-    { label: "Ungroup", icon: ToolbarUngroupIcon, action: onUngroup, enabled: canUngroup },
-    { label: "Boolean Intersection", icon: ToolbarIntersectionIcon, action: onIntersect, enabled: canIntersect },
+    { label: t("toolbar.group"), icon: ToolbarGroupIcon, action: onGroup, enabled: canGroup },
+    { label: t("toolbar.ungroup"), icon: ToolbarUngroupIcon, action: onUngroup, enabled: canUngroup },
+    { label: t("toolbar.intersect"), icon: ToolbarIntersectionIcon, action: onIntersect, enabled: canIntersect },
   ];
   const modifyTools = [
-    { label: "Align", icon: ToolbarAlignIcon, action: onAlign, enabled: canAlign, active: alignMode },
-    { label: "Mirror", icon: ToolbarMirrorIcon, action: onMirror, enabled: hasSelection, active: mirrorMode },
-    { label: "Snap to grid", icon: ToolbarSnapGridIcon, action: onSnap, enabled: hasSelection },
-    { label: "Chamfer", icon: ToolbarChamferIcon, action: onChamfer, enabled: canEdgeModify, active: edgeModifierKind === "chamfer" },
-    { label: "Fillet", icon: ToolbarFilletIcon, action: onFillet, enabled: canEdgeModify, active: edgeModifierKind === "fillet" },
+    { label: t("toolbar.align"), icon: ToolbarAlignIcon, action: onAlign, enabled: canAlign, active: alignMode },
+    { label: t("toolbar.mirror"), icon: ToolbarMirrorIcon, action: onMirror, enabled: hasSelection, active: mirrorMode },
+    { label: t("toolbar.snapToGrid"), icon: ToolbarSnapGridIcon, action: onSnap, enabled: hasSelection },
+    { label: t("toolbar.chamfer"), icon: ToolbarChamferIcon, action: onChamfer, enabled: canEdgeModify, active: edgeModifierKind === "chamfer" },
+    { label: t("toolbar.fillet"), icon: ToolbarFilletIcon, action: onFillet, enabled: canEdgeModify, active: edgeModifierKind === "fillet" },
   ];
   const arrangeTools = [
-    { label: "Drop to workplane", icon: ToolbarDropToWorkplaneIcon, action: onDropToWorkplane, enabled: hasSelection },
+    { label: t("toolbar.dropToWorkplane"), icon: ToolbarDropToWorkplaneIcon, action: onDropToWorkplane, enabled: hasSelection },
   ];
   const renderToolButton = (tool: (typeof leftTools)[number] | (typeof visibilityTools)[number] | (typeof combineTools)[number] | (typeof modifyTools)[number] | (typeof arrangeTools)[number]) => {
     const { icon: Icon, action, enabled, label } = tool;
@@ -9709,7 +9710,7 @@ function SecondaryToolbar({
       <button
         className={`toolbar-icon ${enabled ? "" : "disabled"} ${active ? "active" : ""}`}
         key={label}
-        data-sketchforge-tool={label === "Fillet" ? "fillet" : undefined}
+        data-sketchforge-tool={label === "Fillet" || label === t("toolbar.fillet") ? "fillet" : undefined}
         aria-label={label}
         title={label}
         onClick={action}
@@ -9728,7 +9729,7 @@ function SecondaryToolbar({
       {onHome ? (
         <div className="tool-group editor-nav-group">
           <div className="toolbar-section toolbar-home-section">
-            <div className="toolbar-section-label">Home</div>
+            <div className="toolbar-section-label">{t("dashboard.navHome")}</div>
             <div className="toolbar-section-tools">
               <button className="toolbar-icon editor-home-control" aria-label="Home dashboard" title="Home dashboard" onClick={onHome}>
                 <ToolbarHomeIcon />
@@ -9747,11 +9748,11 @@ function SecondaryToolbar({
           <div className="toolbar-section-tools">{leftTools.slice(4).map(renderToolButton)}</div>
         </div>
         <div className="toolbar-section toolbar-shapes-section" ref={shapesMenuRef}>
-          <div className="toolbar-section-label">Shapes</div>
+          <div className="toolbar-section-label">{t("shapes.basicShapes")}</div>
           <div className="toolbar-section-tools">
             <button
               className={`shape-menu-trigger ${shapesOpen ? "active" : ""}`}
-              aria-label="Add shape"
+              aria-label={t("shapes.basicShapes")}
               aria-expanded={shapesOpen}
               onClick={() => {
                 setVisibilityOpen(false);
@@ -9923,13 +9924,13 @@ function SecondaryToolbar({
       <div className="toolbar-section toolbar-actions-section">
         <div className="toolbar-section-label">Manage</div>
         <div className="action-buttons">
-          <button className="action-icon-button" aria-label="Import" title="Import" onClick={() => onTopPanel("import")}>
+          <button className="action-icon-button" aria-label={t("toolbar.import")} title={t("toolbar.import")} onClick={() => onTopPanel("import")}>
             <ToolbarImportIcon />
           </button>
-          <button className="action-icon-button" aria-label="Export" title="Export" onClick={() => onTopPanel("export")}>
+          <button className="action-icon-button" aria-label={t("toolbar.export")} title={t("toolbar.export")} onClick={() => onTopPanel("export")}>
             <ToolbarVectorExportIcon />
           </button>
-          <button className="action-icon-button" aria-label="Workspace settings" title="Workspace settings" onClick={() => window.dispatchEvent(new Event("sketchforge:open-workspace-settings"))}>
+          <button className="action-icon-button" aria-label={t("workplane.title")} title={t("workplane.title")} onClick={() => window.dispatchEvent(new Event("sketchforge:open-workspace-settings"))}>
             <ToolbarSettingsIcon />
           </button>
         </div>
@@ -10246,15 +10247,15 @@ function TopActionPanel({
             }}
           >
             <ToolbarImportIcon />
-            <strong>Drop STL, OBJ, STEP, or SVG files</strong>
-            <span>or click to choose from your computer</span>
+            <strong>{t("import.dropZoneTitle")}</strong>
+            <span>{t("import.dropZoneSubtitle")}</span>
           </button>
         </div>
       ) : null}
       {panel === "export" ? (
         <div className="export-dialog-body">
           <section className="export-setting-section export-file-section">
-            <label htmlFor="export-file-name">File name</label>
+            <label htmlFor="export-file-name">{t("dashboard.projectNameLabel")}</label>
             <div className="export-file-input-wrap">
               <input
                 id="export-file-name"
@@ -10275,7 +10276,7 @@ function TopActionPanel({
           <section className="export-setting-section">
             <div className="export-section-heading">
               <div>
-                <strong>Format</strong>
+                <strong>{t("export.format")}</strong>
               </div>
               <span className="export-scope-badge">{exportFormat === "skf" ? "Full project" : `${shapeCount} ${scopeLabel}`}</span>
             </div>
